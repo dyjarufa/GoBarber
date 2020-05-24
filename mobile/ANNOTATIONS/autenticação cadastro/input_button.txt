@@ -1,0 +1,76 @@
+import 'react-native-gesture-handler'; => Posso buscar botões que são cross-plataform
+
+styles.ts
+import { RectButton } from 'react-native-gesture-handler'; //
+
+
+
+========================================
+
+
+import React from 'react';
+import { RectButtonProperties } from 'react-native-gesture-handler';
+import { Container, ButtonText } from './styles';
+
+interface ButtonProps extends RectButtonProperties {
+  children: string; especifico novamente a propriedade children forçando ser uma string, // por default o children pode ser qualquer coisa
+}
+
+const Button: React.FC<ButtonProps> = ({ children, ...rest }) => { //aqui o ...rest pega todas as propriedades que o button pode acessar
+  return (
+    <Container {...rest}> e passo como uma propriedade e repasso para o meu Container
+      <ButtonText>{children}</ButtonText>
+    </Container>
+  );
+};
+
+export default Button;
+
+
+
+===============================================
+
+
+import React from 'react';
+import { TextInputProps } from 'react-native'; // Atenção ao import TextInputProps
+import { Container, TextInput } from './styles';
+
+interface InputProps extends TextInputProps {
+  name: string;
+  icon: string;
+}
+
+const Input: React.FC<InputProps> = ({ name, icon, ...rest }) => { //aqui eu vou ignorar o name e icon mas o meu interesse são os ...rest( que possui as propriedades)
+  return (
+    <Container>
+      <TextInput
+        keyboardAppearance="dark"
+        placeholderTextColor="#666360"
+        {...rest}
+      />
+    </Container>
+  );
+};
+
+export default Input;
+
+================================================
+
+Instalação icones:
+
+yarn add react-native-vector-icons
+
+
+//no arquivo android\app\build.gradle usar as seguintes confs:
+apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+
+project.ext.vectoricons = [
+  iconFontNames: ['Feather.ttf']
+];
+
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
+//após altaração:
+
+- yarn android
+- yarn add -D @types/react-native-vector-icons

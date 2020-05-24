@@ -1,0 +1,72 @@
+Async storage é um banco asyncrono que ultilza banco SQLite para salvar informações
+  - a diferença entre o Async storage da web é que esse precisa receber o await por ser assíncrono
+
+yarn add @reac-native-community/async-storage
+
+
+
+const signOut = useCallback(async () => {
+    await AsyncStorage.multiRemove(['@GoBarber:token', '@GoBarber:user']);
+    // Multi Remove => opção do async storage para remever multiplas propriedades
+    // await AsyncStorage.removeItem('@GoBarber:token');
+    // await AsyncStorage.removeItem('@GoBarber:user');
+
+    setData({} as AuthState);
+  }, []);
+
+
+ const signIn = useCallback(async ({ email, password }) => {
+    const reseponse = await api.post('sessions', { email, password });
+
+    const { token, user } = reseponse.data;
+
+    // await AsyncStorage.setItem('@GoBarber:token', token);
+    // await AsyncStorage.setItem('@GoBarber:user', JSON.stringify(user));
+
+    //MultiSet => 1º parâmetro é a key, o 2º é a opção
+    await AsyncStorage.multiSet([
+      ['@GoBarber:token', token],
+      ['@GoBarber:user', JSON.stringify(user)],
+    ]);
+
+
+
+
+  ========================================
+
+  const AuthProvider: React.FC = ({ children }) => {
+    const [data, setData] = useState<AuthState>({} as AuthState);
+
+  //useEffect para assim que carregar meu componente, buscar do meu asyncstorage o token e o usuário para assim preenche o meu AuthState
+  useEffect(() => { // não é possível usar o async dentro do useEffect por isso preciso chamar outra função assincrona
+    async function loadStorageData(): Promise<void> {
+      const [token, user] = await AsyncStorage.multiGet([
+        '@GoBarber:token',
+        '@GoBarber:user',
+      ]);
+
+      //Valido se o usuário se atenticou
+      //documentação react native async storage, informa que retorna chave e valor
+      //Na posição 1 de token e user estão na chave 1
+      if (token[1] && user[1]) {
+        setData({ token: token[1], user: JSON.parse(user[1]) }); //JSON.parse para pegar os valores em string e converte-los para json
+      }
+
+      loadStorageData();
+    }
+  }, []);
+
+
+
+===========================
+
+import React from 'react';
+
+import { AuthProvider } from './auth';
+
+const AppProvider: React.FC = ({ children }) => (
+//Tive dificuldades aqui pois esqueci da passar o children entre a tag AuthProvider
+  <AuthProvider>{children}</AuthProvider>
+);
+
+export default AppProvider;

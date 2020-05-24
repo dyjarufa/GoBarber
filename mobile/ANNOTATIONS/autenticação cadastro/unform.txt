@@ -1,0 +1,169 @@
+yarn add @unform/core @unform/mobile
+
+
+import React, { useCallback, useRef } from 'react';
+import {
+  View,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+
+import Icon from 'react-native-vector-icons/Feather';
+import { useNavigation } from '@react-navigation/native';
+
+import { Form } from '@unform/mobile';
+import { FormHandles } from '@unform/core';
+
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+
+import {
+  Container,
+  Title,
+  ForgotPassword,
+  ForgotPasswordText,
+  CreateAccountButton,
+  CreateAccountText,
+} from './styles';
+
+import logoImg from '../../assets/logo.png';
+
+const SignIn: React.FC = () => {
+  const navigation = useNavigation();
+
+  // useRef => O conceito de ref é quando queremos manipular os elementos de forma direta, não que um evento aconteça
+  const formRef = useRef<FormHandles>(null); // FormHandles métodos que temos disponíveis quando queremos manipular formulários de maneira direta
+
+  const handleSignIn = useCallback((data: object) => {
+    console.log(data);
+  }, []);
+
+  return (
+    <>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled
+      >
+        <ScrollView
+          contentContainerStyle={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Container>
+            <Image source={logoImg} />
+
+            <View>
+              <Title>Faça seu Logon</Title>
+            </View>
+
+            <Form ref={formRef} onSubmit={handleSignIn}>
+              <Input name="email" icon="mail" placeholder="E-mail" />
+              <Input name="password" icon="lock" placeholder="Senha" />
+
+              <Button
+                onPress={() => {
+                  console.log('Foi');
+                  // o interrogação esta  aqui pois o o formRef esta nulo no primeiro momento
+                  formRef.current?.submitForm; // Aqui manipulo de forma direta o submit do formulário ao clicar no botão
+                }}
+              >
+                Entrar
+              </Button>
+            </Form>
+
+            <ForgotPassword onPress={() => {}}>
+              <ForgotPasswordText> Esqueci minha senha</ForgotPasswordText>
+            </ForgotPassword>
+          </Container>
+        </ScrollView>
+
+        <CreateAccountButton onPress={() => navigation.navigate('SignUp')}>
+          <Icon name="log-in" size={20} color="#ff9000" />
+          <CreateAccountText> Criar uma conta</CreateAccountText>
+        </CreateAccountButton>
+      </KeyboardAvoidingView>
+    </>
+  );
+};
+
+export default SignIn;
+
+
+
+
+=============================
+
+input.tsx:
+
+import React, { useEffect, useRef } from 'react';
+import { TextInputProps } from 'react-native';
+// import Icon from 'react-native-vector-icons/Feather';
+import { useField } from '@unform/core'; // vou registrar os campos do formulário
+
+import { Container, TextInput, Icon } from './styles';
+
+interface InputProps extends TextInputProps {
+  name: string;
+  icon: string;
+}
+
+// Essa interface será o valor do meu input 1º
+interface InputValueReference {
+  value: string;
+}
+
+const Input: React.FC<InputProps> = ({ name, icon, ...rest }) => {
+  // para o funcionamento correto, preciso criar uma outra referência
+  const inputElemteRef = useRef<any>(null); // defino como any
+
+  // Todas essas informaçõe serão ncessárias para o cadastro os inputs dentro do unform
+  const { registerField, defaultValue = '', fieldName, error } = useField(name); // defaultValue inicio como vazio '' e será o valor default inicial do meu inputValueRef
+
+  const inputValueRef = useRef<InputValueReference>({ value: defaultValue }); // 2º Agora meu useRef sabe que o meu input será uma string
+
+  // Assim que esse componente aparecer na tela quero registra-lo no unform
+  useEffect(() => {
+    registerField<string>({
+      name: fieldName,
+      ref: inputValueRef.current,
+      path: 'value', // path onde busca o valor do input que é  dentro da propriedade value
+
+      // Quando receber um novo valor no input
+      // any tem tipos específicos no react native para referências
+      setValue(ref: any, value) {
+        inputValueRef.current.value = value; // agora seto de fato o valor
+        inputElemteRef.current.setNataiveProps({ text: value }); // quero setar um elemento nativo IOS / android dentro do meu input
+        // nesse momento estou refletindo exatamente o que está na tela
+      },
+      clearValue() {
+        inputValueRef.current.value = '';
+        inputElemteRef.current.clear();
+      },
+    });
+  }, [fieldName, registerField]);
+
+  return (
+    <Container>
+      <Icon name={icon} size={20} color="#666360" />
+
+      <TextInput
+        ref={inputElemteRef} // faço a referência
+        keyboardAppearance="dark"
+        placeholderTextColor="#666360"
+        defaultValue={defaultValue}
+        // onChangeText funcção que será disparada toda vez que houver uma alteração
+        onChangeText={value => {
+          // value pego o texto digitado pelo usuario
+          inputValueRef.current.value = value; // value é o texto digitado pelo usuário e insiro dentro do value do inputValueRef
+        }}
+        {...rest}
+      />
+    </Container>
+  );
+};
+
+export default Input;
+
+

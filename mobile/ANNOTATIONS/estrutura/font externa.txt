@@ -1,0 +1,19 @@
+module.exports = {
+  project: {
+    ios: {},
+    android: {}
+  },
+  assets: [
+
+    './assets/fonts/'
+  ]
+}
+
+//após configurar o arquivo react-native.config.js
+
+rodo o seguinte comando:
+
+yarn react-native link
+
+//verificar que se foi instalado as fonts no dir:
+android\app\src\main\assets\fonts

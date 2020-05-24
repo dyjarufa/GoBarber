@@ -1,0 +1,15 @@
+app.routes/index.tsx
+
+import React from 'react';
+
+import AuthRoutes from './auth.routes';
+import AppRoutes from './app.routes';
+
+import { useAuth } from '../hooks/auth';
+
+const Routes: React.FC = () => {
+  const { user } = useAuth();
+  return user ? <AppRoutes /> : <AuthRoutes />; //see o usario logado? appRoutes : AuthRoutes
+};
+
+export default Routes;

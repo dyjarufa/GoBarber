@@ -1,0 +1,205 @@
+SighnIn index.tsx
+==========
+
+import React, { useCallback, useRef } from 'react';
+import {
+  View,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+} from 'react-native';
+
+import Icon from 'react-native-vector-icons/Feather';
+import { useNavigation } from '@react-navigation/native';
+
+import { Form } from '@unform/mobile';
+import { FormHandles } from '@unform/core';
+
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+
+import {
+  Container,
+  Title,
+  ForgotPassword,
+  ForgotPasswordText,
+  CreateAccountButton,
+  CreateAccountText,
+} from './styles';
+
+import logoImg from '../../assets/logo.png';
+
+const SignIn: React.FC = () => {
+  const navigation = useNavigation();
+
+  const formRef = useRef<FormHandles>(null); // FormHandles métodos que temos disponíveis quando queremos manipular formulários de maneira direta
+  const passwordInputRef = useRef<TextInput>(null); // estratégia - tipo minha ref como textInpit para ter acesso ao método focus
+
+  const handleSignIn = useCallback((data: object) => {
+    // objecto aqui são os dados do formulário
+    console.log(data);
+  }, []);
+
+  return (
+    <>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled
+      >
+        <ScrollView
+          contentContainerStyle={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Container>
+            <Image source={logoImg} />
+
+            <View>
+              <Title>Faça seu Logon</Title>
+            </View>
+
+            <Form ref={formRef} onSubmit={handleSignIn}>
+              <Input
+                autoCorrect={false} // desabilita auto correção
+                autoCapitalize="none" // não tranforma em maiúscula a primeira letra
+                keyboardType="email-address" // habiltado o @ no teclado, pois identifca que é um input de email
+                name="email"
+                icon="mail"
+                placeholder="E-mail"
+                returnKeyType="next" // pula para outro input
+                onSubmitEditing={() => {
+                  // preciso realizar o foco no input de baixo, para isso preciso dispparar o focus do input de senha(caminh contrário) - Irei usar as Ref para executar uma ação direto de um elemento
+                  passwordInputRef.current?.focus();
+                }}
+              />
+
+              <Input
+                // A REF É A UNICA PROPRIEDADE QUE NÃO CONSIGO ACESSAR DE FORMA COMUM DENTRO DO ELEMENTO(nesse caso lá dentro do Input)
+                ref={passwordInputRef} // passwordInputRef
+                secureTextEntry // oculta os caractes no input da senha
+                name="password"
+                icon="lock"
+                placeholder="Senha"
+                returnKeyType="send" // o formuário pode ser enviar no teclado pelo teclado ( dependendo do OS pode aparece a tecla send)
+                onSubmitEditing={() => {
+                  formRef.current?.submitForm(); // em conjunto com o returnKeyType, essa propriedade realiza o submit do formulário
+                }}
+              />
+
+              <Button
+                onPress={
+                  () => formRef.current?.submitForm() // Aqui manipulo de forma direta o submit do formulário ao clicar no botão
+                }
+              >
+                Entrar
+              </Button>
+            </Form>
+
+            <ForgotPassword onPress={() => {}}>
+              <ForgotPasswordText> Esqueci minha senha</ForgotPasswordText>
+            </ForgotPassword>
+          </Container>
+        </ScrollView>
+
+        <CreateAccountButton onPress={() => navigation.navigate('SignUp')}>
+          <Icon name="log-in" size={20} color="#ff9000" />
+          <CreateAccountText> Criar uma conta</CreateAccountText>
+        </CreateAccountButton>
+      </KeyboardAvoidingView>
+    </>
+  );
+};
+
+export default SignIn;
+
+
+=========================================
+
+Input index.tsx:
+
+import React, {
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from 'react'; // hook useImperativeHandle => serve para passar uma função interna de um componente filho para um componente pai. É o caminho inverso do habitual
+import { TextInputProps } from 'react-native';
+import { useField } from '@unform/core'; // vou registrar os campos do formulário
+
+import { Container, TextInput, Icon } from './styles';
+
+interface InputProps extends TextInputProps {
+  name: string;
+  icon: string;
+}
+
+interface InputValueReference {
+  value: string;
+}
+
+// Estratégia - como nem sempre precisa usar todas as informações contidades na minha varável, posso usar uma interface para pegar as informações que eu quero
+// nesse caso quero apenos o método focus da minha var ref
+interface InputRef {
+  focus(): void;
+}
+
+// RefForwardingComponent posso pegar minha referencia ref
+// E agora passo duas propriedades: InputRef, InputProps
+const Input: React.RefForwardingComponent<InputRef, InputProps> = (
+  { name, icon, ...rest },
+  ref, // agora minha ref entende que quero a informação contida na interface InputRef (focus)
+) => {
+  const inputElemteRef = useRef<any>(null);
+
+  const { registerField, defaultValue = '', fieldName, error } = useField(name);
+
+  const inputValueRef = useRef<InputValueReference>({ value: defaultValue });
+
+  // 1º elemento é minha ref, o 2º é uma função de quais informações quero jogar na inha ref
+  useImperativeHandle(ref, () => ({
+    focus() {
+      // quero jogar o meu focus dentro da minha ref
+      inputElemteRef.current.focus(); // uso inputElemteRef para informar que qquero utilizar o focus dentro desse input
+    },
+  }));
+
+  // Assim que esse componente aparecer na tela quero registra-lo no unform
+  useEffect(() => {
+    registerField<string>({
+      name: fieldName,
+      ref: inputValueRef.current,
+      path: 'value',
+
+      setValue(ref: any, value) {
+        inputValueRef.current.value = value;
+        inputElemteRef.current.setNataiveProps({ text: value });
+      },
+      clearValue() {
+        inputValueRef.current.value = '';
+        inputElemteRef.current.clear();
+      },
+    });
+  }, [fieldName, registerField]);
+
+  return (
+    <Container>
+      <Icon name={icon} size={20} color="#666360" />
+
+      <TextInput
+        ref={inputElemteRef}
+        keyboardAppearance="dark"
+        placeholderTextColor="#666360"
+        defaultValue={defaultValue}
+        onChangeText={value => {
+          inputValueRef.current.value = value; // value é o texto digitado pelo usuário e insiro dentro do value do inputValueRef
+        }}
+        {...rest}
+      />
+    </Container>
+  );
+};
+
+export default forwardRef(Input); // preciso usar o forwardRef para funcionar o RefForwardingComponent
+

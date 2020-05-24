@@ -1,0 +1,4 @@
+dependencias:
+yarn add yup // para validação
+
+yarn add @types/yup -D //Pacote de tipagem do yup no typescript
