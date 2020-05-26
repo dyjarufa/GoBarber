@@ -40,6 +40,7 @@ Projeto desenvolvido pela [RocketSeat GoStack Bootcamp](https://rocketseat.com.b
 -  [Unform](https://unform.dev/)
 -  [VS Code][vc] with [ESLint][vceslint]
 -  [Lottie Animation](https://lottiefiles.com/)
+-  [AsyncStorage](https://reactnative.dev/docs/asyncstorage)
 
 
 ## :memo: License
